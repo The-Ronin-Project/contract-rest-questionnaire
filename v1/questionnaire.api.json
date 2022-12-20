@@ -8,8 +8,23 @@
     "info": {
         "description": "Initial POC API definition for the questionnaire service.",
         "version": "1.0.0",
-        "title": "Questionnaire Service"
+        "title": "Questionnaire Service",
+        "contact": {
+            "name": "Ross Lodge",
+            "url": "https://github.com/projectronin/ronin-questionnaire-service",
+            "email": "ross@projectronin.com"
+        }
     },
+    "tags": [
+        {
+            "name": "questionnaire",
+            "description": "Related to creating, retrieving, and updating questionnaires themselves"
+        },
+        {
+            "name": "summary",
+            "description": "Summaries of questionnaire answers."
+        }
+    ],
     "paths": {
         "/questionnaire": {
             "post": {
@@ -101,7 +116,10 @@
                             }
                         }
                     }
-                }
+                },
+                "tags": [
+                    "questionnaire"
+                ]
             }
         },
         "/questionnaire/{assignmentId}": {
@@ -217,6 +235,9 @@
                         "required": true,
                         "description": "The latest ETag header as supplied from a creation, get, or previous answer post"
                     }
+                ],
+                "tags": [
+                    "questionnaire"
                 ]
             },
             "get": {
@@ -308,6 +329,9 @@
                         },
                         "description": "The assignment ID to retrieve"
                     }
+                ],
+                "tags": [
+                    "questionnaire"
                 ]
             }
         },
@@ -439,6 +463,9 @@
                         },
                         "description": "Treat this alert tier and higher as \"followUp\"."
                     }
+                ],
+                "tags": [
+                    "summary"
                 ]
             }
         }
