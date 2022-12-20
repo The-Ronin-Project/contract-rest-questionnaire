@@ -1,0 +1,76 @@
+name: Rest Contract CI/CD
+
+on:
+  workflow_call:
+    inputs:
+      schema_name:
+        required: true
+        type: string
+      publish:
+        required: false
+        default: false
+        type: boolean
+      docker_server:
+        default: "docker-repo.devops.projectronin.io"
+        required: false
+        type: string
+    secrets:
+      docker_username:
+        required: false
+      docker_password:
+        required: false
+      nexus_user:
+        required: false
+      nexus_token:
+        required: false
+
+jobs:
+  cicd:
+    name: Pull Request CI/CD flow
+    runs-on: self-hosted
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2.1.0
+
+      - name: Docker login
+        run: |-
+          docker login \
+          -u "${{secrets.docker_username}}" \
+          -p "${{secrets.docker_password}}" \
+          ${{ inputs.docker_server }} \
+          || docker login \
+          -u "${{ secrets.NEXUS_DOCKER_USERNAME }}" \
+          -p "${{ secrets.NEXUS_DOCKER_PASSWORD }}" \
+          ${{ inputs.docker_server }}
+
+      - name: Run Tests
+        id: run_tests
+        run: docker run -v "${PWD}:/app" docker-repo.devops.projectronin.io/ronin-contract-rest-tooling:v1 contract-tools test
+
+      - name: Generate Docs
+        id: generate_docs
+        run: docker run -u root:root -v "${PWD}:/app" docker-repo.devops.projectronin.io/ronin-contract-rest-tooling:v1 contract-tools doc
+
+      - name: Publish Artifact
+        if: ${{ inputs.publish }}
+        id: publish_artifact
+        run: |-
+          set -x
+          shopt -s extglob
+
+          mkdir -p ${PWD}/build/
+          VERSIONS="$(ls -d v*([0-9]))"
+          echo "Versions = ${VERSIONS}"
+          DATE_STR="$(date +%Y%m%d%H%M%S)"
+          for v in ${VERSIONS}; do
+            ARTIFACT_BASE="${{ inputs.schema_name }}-${v}-${DATE_STR}-${{ github.sha }}"
+            ARTIFACT="${ARTIFACT_BASE}.tar.gz"
+            ( cd ${v} && echo "${ARTIFACT_BASE}" >> version && tar cvzf ../build/${ARTIFACT} . )
+            curl -v --user '${{ secrets.nexus_user }}:${{ secrets.nexus_token }}' \
+              --upload-file $PWD/build/${ARTIFACT} \
+              "https://repo.devops.projectronin.io/repository/ronin-raw/contract-rest/${{ inputs.schema_name }}/${ARTIFACT}"
+          done
