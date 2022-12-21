@@ -55,22 +55,27 @@ jobs:
         id: generate_docs
         run: docker run -u root:root -v "${PWD}:/app" docker-repo.devops.projectronin.io/ronin-contract-rest-tooling:v1 contract-tools doc
 
+      - name: Compile Schemas
+        id: compile_schemas
+        run: docker run -u root:root -v "${PWD}:/app" docker-repo.devops.projectronin.io/ronin-contract-rest-tooling:v1 contract-tools compile
+
       - name: Publish Artifact
         if: ${{ inputs.publish }}
         id: publish_artifact
         run: |-
           set -x
-          shopt -s extglob
-
-          mkdir -p ${PWD}/build/
-          VERSIONS="$(ls -d v*([0-9]))"
-          echo "Versions = ${VERSIONS}"
-          DATE_STR="$(date +%Y%m%d%H%M%S)"
-          for v in ${VERSIONS}; do
-            ARTIFACT_BASE="${{ inputs.schema_name }}-${v}-${DATE_STR}-${{ github.sha }}"
-            ARTIFACT="${ARTIFACT_BASE}.tar.gz"
-            ( cd ${v} && echo "${ARTIFACT_BASE}" >> version && tar cvzf ../build/${ARTIFACT} . )
-            curl -v --user '${{ secrets.nexus_user }}:${{ secrets.nexus_token }}' \
-              --upload-file $PWD/build/${ARTIFACT} \
-              "https://repo.devops.projectronin.io/repository/ronin-raw/contract-rest/${{ inputs.schema_name }}/${ARTIFACT}"
-          done
+          
+          cleanup() {
+            if [[ -e /tmp/settings.xml ]]; then
+              rm /tmp/settings.xml
+            fi
+          }
+          
+          trap "cleanup" EXIT
+          
+          echo "<settings><servers><server><id>ronin-nexus</id><username>${{ secrets.NEXUS_MAVEN_USER }}</username><password>${{ secrets.NEXUS_MAVEN_TOKEN }}</password></server></servers></settings>" > /tmp/settings.xml
+          
+          docker run -u root:root -v "${PWD}:/app" -v "/tmp/settings.xml:/home/ronin/.m2/settings.xml" docker-repo.devops.projectronin.io/ronin-contract-rest-tooling:v1 contract-tools publishToMaven
+          find . -name 'VERSION' -exec git add "{}" \;
+          git commit -m "Update versions pushed to nexus"
+          git push origin $(git branch --show-current)
