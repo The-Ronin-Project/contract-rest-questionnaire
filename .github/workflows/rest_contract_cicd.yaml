@@ -49,17 +49,13 @@ jobs:
 
       - name: Run Tests
         id: run_tests
-        run: docker run -v "${PWD}:/app" docker-repo.devops.projectronin.io/ronin-contract-rest-tooling:v1 contract-tools test
-
-      - name: Generate Docs
-        id: generate_docs
-        run: docker run -u root:root -v "${PWD}:/app" docker-repo.devops.projectronin.io/ronin-contract-rest-tooling:v1 contract-tools doc
+        run: docker run -v "${PWD}:/app" docker-repo.devops.projectronin.io/ronin-contract-rest-tooling:v1 gradle check
 
       - name: Compile Schemas
         id: compile_schemas
-        run: docker run -u root:root -v "${PWD}:/app" docker-repo.devops.projectronin.io/ronin-contract-rest-tooling:v1 contract-tools compile
+        run: docker run -u root:root -v "${PWD}:/app" docker-repo.devops.projectronin.io/ronin-contract-rest-tooling:v1 contract-tools build
 
       - name: Publish Artifact
         if: ${{ inputs.publish }}
         id: publish_artifact
-        run: docker run -u root:root -v "${PWD}:/app" docker-repo.devops.projectronin.io/ronin-contract-rest-tooling:v1 --env NEXUS_USER="${{ secrets.NEXUS_MAVEN_USER }}" --env NEXUS_TOKEN="${{ secrets.NEXUS_MAVEN_TOKEN }}" contract-tools publish
+        run: docker run -u root:root -v "${PWD}:/app" docker-repo.devops.projectronin.io/ronin-contract-rest-tooling:v1 --env NEXUS_USER="${{ secrets.NEXUS_MAVEN_USER }}" --env NEXUS_TOKEN="${{ secrets.NEXUS_MAVEN_TOKEN }}" gradle build publish
