@@ -3,3 +3,6 @@ build/
 /.idea/
 gen/
 .gradle/
+.dependencies/
+
+!gradle/wrapper/gradle-wrapper.jar
