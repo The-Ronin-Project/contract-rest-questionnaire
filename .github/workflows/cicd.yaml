@@ -12,7 +12,6 @@ jobs:
     name: build_and_test
     uses: ./.github/workflows/rest_contract_cicd.yaml
     with:
-      schema_name: contract-rest-questionnaire
       publish: ${{ github.ref == 'refs/heads/main' }}
     secrets:
       nexus_user:      ${{ secrets.NEXUS_RAW_USER }}
