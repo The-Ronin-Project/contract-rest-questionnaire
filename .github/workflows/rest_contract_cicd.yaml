@@ -44,5 +44,5 @@ jobs:
         id: publish_artifact
         run: ./gradlew assemble publish
         env:
-          NEXUS_USER: ${{ secrets.NEXUS_MAVEN_USER }}
-          NEXUS_TOKEN: ${{ secrets.NEXUS_MAVEN_TOKEN }}
+          NEXUS_USER: ${{ secrets.nexus_user }}
+          NEXUS_TOKEN: ${{ secrets.nexus_token }}
