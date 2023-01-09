@@ -1,5 +1,8 @@
 docs/
 build/
-v*/version
 /.idea/
 gen/
+.gradle/
+.dependencies/
+
+!gradle/wrapper/gradle-wrapper.jar
