@@ -14,5 +14,5 @@ jobs:
     with:
       publish: ${{ github.ref == 'refs/heads/main' }}
     secrets:
-      nexus_user:      ${{ secrets.NEXUS_RAW_USER }}
-      nexus_token:     ${{ secrets.NEXUS_RAW_TOKEN }}
+      nexus_user:      ${{ secrets.NEXUS_MAVEN_USER }}
+      nexus_token:     ${{ secrets.NEXUS_MAVEN_TOKEN }}
