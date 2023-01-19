@@ -10,7 +10,7 @@ on:
 jobs:
   build_and_test:
     name: build_and_test
-    uses: ./.github/workflows/rest_contract_cicd.yaml
+    uses: projectronin/github/.github/workflows/rest_contract_cicd.yaml@master
     with:
       publish: ${{ github.ref == 'refs/heads/main' }}
     secrets:
