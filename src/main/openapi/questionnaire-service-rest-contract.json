@@ -1,0 +1,604 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "Questionnaire Service REST API - OpenAPI 3.0",
+    "description": "REST API contract for the questionnaire service. Includes patient-facing and admin-facing endpoints.\n\nSome useful links:\n- [Questionnaire Service Repository](https://github.com/projectronin/prodeng-patient-questionnaire)",
+    "termsOfService": "http://swagger.io/terms/",
+    "contact": {
+      "email": "ddionise@projectronin.com"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "version": "1.0.17"
+  },
+  "externalDocs": {
+    "description": "Find out more about Swagger",
+    "url": "http://swagger.io"
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Questionnaires",
+      "description": "Represents the questions to be answered by a patient"
+    }
+  ],
+  "paths": {
+    "/api/v1/management/tenants/{tenantId}/questionnaires/{questionnaireId}": {
+      "put": {
+        "tags": [
+          "Questionnaires"
+        ],
+        "summary": "Create/Update Questionnaire",
+        "description": "Create/update a questionnaire for a tenant",
+        "operationId": "createQuestionnaire",
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "The ID of the tenant who will be using the questionnaire",
+            "example": "ca41ec2f-621d-4b7d-93e6-38ec50854b5e"
+          },
+          {
+            "in": "path",
+            "name": "questionnaireId",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "The ID of the questionnaire that is being updated. If omitted, a new questionnaire will be created",
+            "example": "d78f8706-6e68-49b0-a57c-4a0f3aedb128"
+          },
+          {
+            "in": "formData",
+            "name": "configuration",
+            "schema": {
+              "$ref": "#/components/schemas/QuestionnaireConfiguration"
+            },
+            "required": true,
+            "description": "The configuration values applied to the questionnaire",
+            "examples": {
+              "QuestionnaireConfiguration": {
+                "$ref": "#/components/examples/QuestionnaireConfiguration"
+              }
+            }
+          },
+          {
+            "in": "formData",
+            "name": "file",
+            "type": "file",
+            "description": "JSON file containing the questionnaire",
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Questionnaire"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                },
+                "examples": {
+                  "CreateQuestionnaireResponse": {
+                    "$ref": "#/components/examples/CreateQuestionnaireResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Questionnaires"
+        ],
+        "description": "Fetch questionnaires for a single tenant",
+        "summary": "Fetch Questionnaires",
+        "operationId": "fetchQuestionnaires",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "The ID of the tenant who will be using the questionnaire",
+            "example": "ca41ec2f-621d-4b7d-93e6-38ec50854b5e"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Paging param to control the number of questionnaires to get back",
+            "example": 20
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Zero-indexed page number",
+            "example": 0
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "paging": {
+                          "$ref": "#/components/schemas/Paging"
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Questionnaire"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                "examples": {
+                  "FetchQuestionnairesResponse": {
+                    "$ref": "#/components/examples/FetchQuestionnairesResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Paging": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "description": "Zero-indexed page. Value is set in the request query params"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Max limit of the number of records to get back in response. Value is set in the request query params"
+          }
+        }
+      },
+      "QuestionnaireConfiguration": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "object",
+            "properties": {
+              "ehrOrderable": {
+                "type": "string",
+                "description": "Value we will use as the key of the orderable in the EHR. This will be mapped to a unique ID in the Ronin system"
+              },
+              "providerFacing": {
+                "type": "string",
+                "description": "Name of the questionnaire that the provider sees"
+              },
+              "patientFacing": {
+                "type": "string",
+                "description": "Name of the questionnaire that the patient sees"
+              }
+            },
+            "required": [
+              "ehrOrderable",
+              "providerFacing",
+              "patientFacing"
+            ]
+          },
+          "group": {
+            "type": "string",
+            "description": "ID of the questionnaire group that the questionnaire belongs to"
+          },
+          "triagingParty": {
+            "type": "string",
+            "description": "Group that will handle triaging alerts from this questionnaire"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "SYMPTOM"
+            ],
+            "description": "The \"type\" of questionnaire. Used to filter out questionnaires that are not relevant to a given use case (eg, only need \"SYMPTOM\" questionnaires on the clinician dashboard)"
+          },
+          "timing": {
+            "type": "object",
+            "properties": {
+              "startDelay": {
+                "description": "Period of time between the starting trigger and the time that it is available to the patient. Available immediately after trigger if omitted",
+                "type": "object",
+                "properties": {
+                  "duration": {
+                    "type": "integer",
+                    "description": "Number of `<durationUUit>`s between starting trigger and availability"
+                  },
+                  "durationUnit": {
+                    "$ref": "#/components/schemas/DurationUnit"
+                  }
+                },
+                "required": [
+                  "duration",
+                  "durationUnit"
+                ]
+              },
+              "endDelay": {
+                "description": "Period of time between the ending trigger and the time that it is available to the patient. Unavailable immediately after trigger if omitted",
+                "type": "object",
+                "properties": {
+                  "duration": {
+                    "type": "integer",
+                    "description": "Number of `<durationUnit>`s between ending trigger and availability"
+                  },
+                  "durationUnit": {
+                    "$ref": "#/components/schemas/DurationUnit"
+                  }
+                },
+                "required": [
+                  "duration",
+                  "durationUnit"
+                ]
+              },
+              "repeat": {
+                "description": "See FHIR `Timing -> repeat` object for inspiration https://www.hl7.org/fhir/datatypes.html#Timing\n",
+                "type": "object",
+                "properties": {
+                  "count": {
+                    "type": "integer",
+                    "description": "Number of times to repeat the period. If omitted, the questionnaire will have no pre-set end date"
+                  },
+                  "period": {
+                    "type": "number",
+                    "description": "Default value for the number of `<periodUnit>`s that the questionnaire will be available to the patient"
+                  },
+                  "periodUnit": {
+                    "type": "string",
+                    "description": "Defines the unit for the `period` value. eg, if `period` is `2` and `periodUnit` is `m`, the default duration for the questionnaire will be 2 months. Values taken from FHIR time units value set. See https://build.fhir.org/valueset-units-of-time.html#definition.",
+                    "enum": [
+                      "d",
+                      "wk",
+                      "mo",
+                      "a"
+                    ]
+                  },
+                  "frequency": {
+                    "type": "integer",
+                    "description": "Number of times questionnaire is available within the period. No frequency limit is set when this is omitted"
+                  },
+                  "dayOfWeek": {
+                    "type": "array",
+                    "description": "Days of the week that the questionnaire should be available. Defaults to all days in the week when this is omitted",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "mon",
+                        "tue",
+                        "wed",
+                        "thu",
+                        "fri",
+                        "sat",
+                        "sun"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "required": [
+              "repeat"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "timing"
+        ]
+      },
+      "QuestionnaireFile": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "description": "The name of the file"
+          },
+          "uploadTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date and time that the file was uploaded"
+          },
+          "uploadedBy": {
+            "type": "string",
+            "description": "User that uploaded the file"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL of the file (for downloading)"
+          }
+        },
+        "required": [
+          "fileName",
+          "uploadTimestamp",
+          "uploadedBy",
+          "url"
+        ]
+      },
+      "Questionnaire": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "UUID generated by Ronin"
+          },
+          "tenantId": {
+            "type": "string",
+            "description": "ID of the tenant"
+          },
+          "version": {
+            "type": "integer",
+            "description": "Version number of the questionnaire. Increments by one each time a questionnaire is updated"
+          },
+          "configuration": {
+            "$ref": "#/components/schemas/QuestionnaireConfiguration"
+          },
+          "file": {
+            "$ref": "#/components/schemas/QuestionnaireFile"
+          }
+        },
+        "required": [
+          "id",
+          "tenantId",
+          "version",
+          "configuration",
+          "file"
+        ]
+      },
+      "DurationUnit": {
+        "type": "string",
+        "description": "Possible units of a duration",
+        "enum": [
+          "h",
+          "d",
+          "wk",
+          "mo",
+          "a"
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique ID for this error"
+          },
+          "source": {
+            "type": "string",
+            "description": "Service where the error originated"
+          },
+          "httpStatus": {
+            "type": "string",
+            "enum": [
+              "NOT_FOUND",
+              "FORBIDDEN",
+              "BAD_REQUEST"
+            ],
+            "description": "String representation of HTTP status"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "integer",
+            "description": "HTTP status"
+          },
+          "error": {
+            "type": "string",
+            "description": "Human readable form of the exception or httpStatus. This MUST be included"
+          },
+          "exception": {
+            "type": "string",
+            "description": "The exception class"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human readable message"
+          },
+          "detail": {
+            "type": "string",
+            "description": "A human readable message that describes the specific failure"
+          }
+        }
+      }
+    },
+    "examples": {
+      "QuestionnaireConfiguration": {
+        "summary": "Example request body for creating a questionnaire that is available to take any time for six months",
+        "value": {
+          "name": {
+            "ehrOrderable": "BD: (Breast Daily) Symptoms",
+            "providerFacing": "Daily Breast Cancer Symptoms Questionnaire",
+            "patientFacing": "Breast Cancer Symptoms Questionnaire"
+          },
+          "type": "SYMPTOM",
+          "group": "9f20974e-eba4-4f6f-935b-061b8240577e",
+          "triagingParty": "67163dcf-9473-405e-9aaf-4627e6c478b6",
+          "timing": {
+            "startDelay": {
+              "duration": 3,
+              "durationUnit": "d"
+            },
+            "repeat": {
+              "count": 6,
+              "period": 1,
+              "periodUnit": "mo"
+            }
+          }
+        }
+      },
+      "CreateQuestionnaireResponse": {
+        "summary": "Example response when creating a questionnaire",
+        "value": {
+          "data": {
+            "id": "d78f8706-6e68-49b0-a57c-4a0f3aedb128",
+            "tenantId": "ca41ec2f-621d-4b7d-93e6-38ec50854b5e",
+            "version": 1,
+            "configuration": {
+              "name": {
+                "ehrOrderable": "BD: (Breast Daily) Symptoms",
+                "providerFacing": "Daily Breast Cancer Symptoms Questionnaire",
+                "patientFacing": "Breast Cancer Symptoms Questionnaire"
+              },
+              "type": "SYMPTOM",
+              "group": "9f20974e-eba4-4f6f-935b-061b8240577e",
+              "triagingParty": "67163dcf-9473-405e-9aaf-4627e6c478b6",
+              "timing": {
+                "startDelay": {
+                  "duration": 3,
+                  "durationUnit": "d"
+                },
+                "repeat": {
+                  "count": 6,
+                  "period": 1,
+                  "periodUnit": "mo"
+                }
+              }
+            },
+            "file": {
+              "fileName": "psj-breast-cancer-symptoms-questionnaire.json",
+              "uploadTimestamp": "2023-11-13T08:23:43.02Z",
+              "uploadedBy": "Lynda Johnson",
+              "url": "https://ico.ronin.io/questionnaires/psj-breast-cancer-symptoms-questionnaire.json"
+            }
+          }
+        }
+      },
+      "FetchQuestionnairesResponse": {
+        "summary": "Example response when fetching questionnaires",
+        "value": {
+          "paging": {
+            "page": 0,
+            "limit": 2
+          },
+          "data": [
+            {
+              "id": "d78f8706-6e68-49b0-a57c-4a0f3aedb128",
+              "tenantId": "ca41ec2f-621d-4b7d-93e6-38ec50854b5e",
+              "version": 1,
+              "configuration": {
+                "name": {
+                  "ehrOrderable": "BD: (Breast Daily) Symptoms",
+                  "providerFacing": "Daily Breast Cancer Symptoms Questionnaire",
+                  "patientFacing": "Breast Cancer Symptoms Questionnaire"
+                },
+                "type": "SYMPTOM",
+                "group": "9f20974e-eba4-4f6f-935b-061b8240577e",
+                "triagingParty": "67163dcf-9473-405e-9aaf-4627e6c478b6",
+                "timing": {
+                  "startDelay": {
+                    "duration": 3,
+                    "durationUnit": "d"
+                  },
+                  "repeat": {
+                    "count": 6,
+                    "period": 1,
+                    "periodUnit": "mo"
+                  }
+                }
+              },
+              "file": {
+                "fileName": "psj-breast-cancer-symptoms-questionnaire.json",
+                "uploadTimestamp": "2023-11-13T08:23:43.02Z",
+                "uploadedBy": "Lynda Johnson",
+                "url": "https://ico.ronin.io/questionnaires/psj-breast-cancer-symptoms-questionnaire.json"
+              }
+            },
+            {
+              "id": "c45751b4-7b20-4e67-b607-0e1d5661301b",
+              "tenantId": "ca41ec2f-621d-4b7d-93e6-38ec50854b5e",
+              "version": 1,
+              "configuration": {
+                "name": {
+                  "ehrOrderable": "LD: (Lung Daily) Symptoms",
+                  "providerFacing": "Daily Lung Cancer Symptoms Questionnaire",
+                  "patientFacing": "Lung Cancer Symptoms Questionnaire"
+                },
+                "type": "SYMPTOM",
+                "triagingParty": "67163dcf-9473-405e-9aaf-4627e6c478b6",
+                "timing": {
+                  "repeat": {
+                    "count": 12,
+                    "period": 1,
+                    "periodUnit": "mo"
+                  }
+                }
+              },
+              "file": {
+                "fileName": "psj-lung-cancer-symptoms-questionnaire.json",
+                "uploadTimestamp": "2023-19-25T06:53:17.05Z",
+                "uploadedBy": "Lynda Johnson",
+                "url": "https://ico.ronin.io/questionnaires/psj-lung-cancer-symptoms-questionnaire.json"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
