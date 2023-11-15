@@ -24,22 +24,19 @@
   ],
   "tags": [
     {
-      "name": "Questionnaires",
-      "description": "Represents the questions to be answered by a patient"
+      "name": "Admin",
+      "description": "Endpoints used by the admin console"
     }
   ],
   "paths": {
-    "/api/v1/management/tenants/{tenantId}/questionnaires/{questionnaireId}": {
-      "put": {
+    "/api/v1/management/tenants/{tenantId}/questionnaires": {
+      "post": {
         "tags": [
-          "Questionnaires"
+          "Admin"
         ],
-        "summary": "Create/Update Questionnaire",
-        "description": "Create/update a questionnaire for a tenant",
+        "summary": "Create Questionnaire",
+        "description": "Create a questionnaire for a tenant",
         "operationId": "createQuestionnaire",
-        "consumes": [
-          "multipart/form-data"
-        ],
         "security": [
           {
             "bearerAuth": []
@@ -55,42 +52,34 @@
             "required": true,
             "description": "The ID of the tenant who will be using the questionnaire",
             "example": "ca41ec2f-621d-4b7d-93e6-38ec50854b5e"
-          },
-          {
-            "in": "path",
-            "name": "questionnaireId",
-            "schema": {
-              "type": "string"
-            },
-            "required": false,
-            "description": "The ID of the questionnaire that is being updated. If omitted, a new questionnaire will be created",
-            "example": "d78f8706-6e68-49b0-a57c-4a0f3aedb128"
-          },
-          {
-            "in": "formData",
-            "name": "configuration",
-            "schema": {
-              "$ref": "#/components/schemas/QuestionnaireConfiguration"
-            },
-            "required": true,
-            "description": "The configuration values applied to the questionnaire",
-            "examples": {
-              "QuestionnaireConfiguration": {
-                "$ref": "#/components/examples/QuestionnaireConfiguration"
-              }
-            }
-          },
-          {
-            "in": "formData",
-            "name": "file",
-            "type": "file",
-            "description": "JSON file containing the questionnaire",
-            "required": true
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "configuration": {
+                    "$ref": "#/components/schemas/QuestionnaireConfiguration"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "configuration",
+                  "file"
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
-            "description": "Successful operation",
+            "description": "Success",
             "content": {
               "application/json": {
                 "schema": {
@@ -106,7 +95,30 @@
                 },
                 "examples": {
                   "CreateQuestionnaireResponse": {
-                    "$ref": "#/components/examples/CreateQuestionnaireResponse"
+                    "$ref": "#/components/examples/UpsertQuestionnaireResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Error"
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "BadRequestExample": {
+                    "$ref": "#/components/examples/BadRequestException"
                   }
                 }
               }
@@ -116,7 +128,7 @@
       },
       "get": {
         "tags": [
-          "Questionnaires"
+          "Admin"
         ],
         "description": "Fetch questionnaires for a single tenant",
         "summary": "Fetch Questionnaires",
@@ -187,6 +199,160 @@
                 "examples": {
                   "FetchQuestionnairesResponse": {
                     "$ref": "#/components/examples/FetchQuestionnairesResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Error"
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "NotFoundExample": {
+                    "$ref": "#/components/examples/NotFoundException"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/management/tenants/{tenantId}/questionnaires/{questionnaireId}": {
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Update Questionnaire",
+        "description": "Update a questionnaire for a tenant",
+        "operationId": "updateQuestionnaire",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "The ID of the tenant who will be using the questionnaire",
+            "example": "ca41ec2f-621d-4b7d-93e6-38ec50854b5e"
+          },
+          {
+            "in": "path",
+            "name": "questionnaireId",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "The ID of the questionnaire that is being updated. If omitted, a new questionnaire will be created",
+            "example": "d78f8706-6e68-49b0-a57c-4a0f3aedb128"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "configuration": {
+                    "$ref": "#/components/schemas/QuestionnaireConfiguration"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "configuration",
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Questionnaire"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                },
+                "examples": {
+                  "CreateQuestionnaireResponse": {
+                    "$ref": "#/components/examples/UpsertQuestionnaireResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Error"
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "BadRequestExample": {
+                    "$ref": "#/components/examples/BadRequestException"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Error"
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "NotFoundExample": {
+                    "$ref": "#/components/examples/NotFoundException"
                   }
                 }
               }
@@ -485,8 +651,8 @@
           }
         }
       },
-      "CreateQuestionnaireResponse": {
-        "summary": "Example response when creating a questionnaire",
+      "UpsertQuestionnaireResponse": {
+        "summary": "Successful Create/Update",
         "value": {
           "data": {
             "id": "d78f8706-6e68-49b0-a57c-4a0f3aedb128",
@@ -515,7 +681,7 @@
             },
             "file": {
               "fileName": "psj-breast-cancer-symptoms-questionnaire.json",
-              "uploadTimestamp": "2023-11-13T08:23:43.02Z",
+              "uploadTimestamp": "2023-11-13T08:23:43Z",
               "uploadedBy": "Lynda Johnson",
               "url": "https://ico.ronin.io/questionnaires/psj-breast-cancer-symptoms-questionnaire.json"
             }
@@ -523,7 +689,7 @@
         }
       },
       "FetchQuestionnairesResponse": {
-        "summary": "Example response when fetching questionnaires",
+        "summary": "Successful Fetch",
         "value": {
           "paging": {
             "page": 0,
@@ -557,7 +723,7 @@
               },
               "file": {
                 "fileName": "psj-breast-cancer-symptoms-questionnaire.json",
-                "uploadTimestamp": "2023-11-13T08:23:43.02Z",
+                "uploadTimestamp": "2017-07-21T17:32:28Z",
                 "uploadedBy": "Lynda Johnson",
                 "url": "https://ico.ronin.io/questionnaires/psj-breast-cancer-symptoms-questionnaire.json"
               }
@@ -584,10 +750,46 @@
               },
               "file": {
                 "fileName": "psj-lung-cancer-symptoms-questionnaire.json",
-                "uploadTimestamp": "2023-19-25T06:53:17.05Z",
+                "uploadTimestamp": "2023-19-25T06:53:17Z",
                 "uploadedBy": "Lynda Johnson",
                 "url": "https://ico.ronin.io/questionnaires/psj-lung-cancer-symptoms-questionnaire.json"
               }
+            }
+          ]
+        }
+      },
+      "NotFoundException": {
+        "summary": "Resource Not Found",
+        "value": {
+          "errors": [
+            {
+              "id": "85467c94-4cae-4b66-ad50-67e10a4ddd49",
+              "source": "questionnaire-service",
+              "httpStatus": "NOT_FOUND",
+              "timestamp": "2023-19-25T06:53:17Z",
+              "status": 404,
+              "error": "Resource not found",
+              "exception": "com.projectronin.product.common.exception.NotFoundException",
+              "message": "Questionnaire with ID 0217a62f-f72b-4e42-889a-085a85cca3b7 not found",
+              "detail": "No questionnaire in the DB found with the ID 0217a62f-f72b-4e42-889a-085a85cca3b7"
+            }
+          ]
+        }
+      },
+      "BadRequestException": {
+        "summary": "Bad Request",
+        "value": {
+          "errors": [
+            {
+              "id": "8b03fbee-7e96-4491-9621-73ca0213c27d",
+              "source": "questionnaire-service",
+              "httpStatus": "BAD_REQUEST",
+              "timestamp": "2023-19-25T06:53:17Z",
+              "status": 400,
+              "error": "Bad request",
+              "exception": "com.projectronin.product.common.exception.BadRequestException",
+              "message": "Could not parse request body",
+              "detail": "Must include the \"type\" property"
             }
           ]
         }

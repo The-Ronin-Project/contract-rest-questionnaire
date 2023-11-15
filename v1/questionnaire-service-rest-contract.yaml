@@ -13,26 +13,24 @@ info:
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
-  version: 1.0.17
+  version: 1.0.0
 externalDocs:
   description: Find out more about Swagger
   url: http://swagger.io
 servers:
   - url: "/api/v1"
 tags:
-  - name: Questionnaires
-    description: Represents the questions to be answered by a patient
+  - name: Admin
+    description: Endpoints used by the admin console
 
 paths:
-  "/api/v1/management/tenants/{tenantId}/questionnaires/{questionnaireId}":
-    put:
+  "/management/tenants/{tenantId}/questionnaires":
+    post:
       tags:
-        - Questionnaires
-      summary: Update Questionnaire
-      description: Update a questionnaire for a tenant
-      operationId: updateQuestionnaire
-      consumes:
-        - multipart/form-data
+        - Admin
+      summary: Create Questionnaire
+      description: Create a questionnaire for a tenant
+      operationId: createQuestionnaire
       security:
         - bearerAuth: [ ]
       parameters:
@@ -43,46 +41,41 @@ paths:
           required: true
           description: The ID of the tenant who will be using the questionnaire
           example: ca41ec2f-621d-4b7d-93e6-38ec50854b5e
-        - in: path
-          name: questionnaireId
-          schema:
-            type: string
-          required: false
-          description: The ID of the questionnaire that is being updated. If omitted, a new questionnaire will be created
-          example: d78f8706-6e68-49b0-a57c-4a0f3aedb128
-        - in: formData
-          name: configuration
-          schema:
-            $ref: "#/components/schemas/QuestionnaireConfiguration"
-          required: true
-          description: The configuration values applied to the questionnaire
-          examples:
-            QuestionnaireConfiguration:
-              $ref: "#/components/examples/QuestionnaireConfiguration"
-        - in: formData
-          name: file
-          type: file
-          description: JSON file containing the questionnaire
-          required: true
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/UpsertQuestionnaireRequestBody"
+
       responses:
         '201':
-          description: Successful operation
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpsertQuestionnaireResponseBody"
+              examples:
+                CreateQuestionnaireResponse:
+                  $ref: "#/components/examples/UpsertQuestionnaireResponse"
+        '400':
+          description: Bad Request
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  data:
-                    $ref: "#/components/schemas/Questionnaire"
-                required:
-                  - data
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error"
               examples:
-                CreateQuestionnaireResponse:
-                  $ref: "#/components/examples/CreateQuestionnaireResponse"
+                BadRequestExample:
+                  $ref: "#/components/examples/BadRequestException"
 
     get:
       tags:
-        - Questionnaires
+        - Admin
       description: Fetch questionnaires for a single tenant
       summary: Fetch Questionnaires
       operationId: fetchQuestionnaires
@@ -114,20 +107,94 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - type: object
-                    properties:
-                      paging:
-                        $ref: "#/components/schemas/Paging"
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: "#/components/schemas/Questionnaire"
+                $ref: "#/components/schemas/FetchQuestionnairesResponseBody"
               examples:
                 FetchQuestionnairesResponse:
                   $ref: "#/components/examples/FetchQuestionnairesResponse"
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error"
+              examples:
+                NotFoundExample:
+                  $ref: "#/components/examples/NotFoundException"
+
+  "/management/tenants/{tenantId}/questionnaires/{questionnaireId}":
+    put:
+      tags:
+        - Admin
+      summary: Update Questionnaire
+      description: Update a questionnaire for a tenant
+      operationId: updateQuestionnaire
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: tenantId
+          schema:
+            type: string
+          required: true
+          description: The ID of the tenant who will be using the questionnaire
+          example: ca41ec2f-621d-4b7d-93e6-38ec50854b5e
+        - in: path
+          name: questionnaireId
+          schema:
+            type: string
+          required: true
+          description: The ID of the questionnaire that is being updated. If omitted, a new questionnaire will be created
+          example: d78f8706-6e68-49b0-a57c-4a0f3aedb128
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/UpsertQuestionnaireRequestBody"
+
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpsertQuestionnaireResponseBody"
+              examples:
+                CreateQuestionnaireResponse:
+                  $ref: "#/components/examples/UpsertQuestionnaireResponse"
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error"
+              examples:
+                BadRequestExample:
+                  $ref: "#/components/examples/BadRequestException"
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error"
+              examples:
+                NotFoundExample:
+                  $ref: "#/components/examples/NotFoundException"
 
 components:
   schemas:
@@ -246,9 +313,8 @@ components:
         fileName:
           type: string
           description: The name of the file
-        uploadTimestamp:
+        uploadedTimestamp:
           type: string
-          format: date-time
           description: Date and time that the file was uploaded
         uploadedBy:
           type: string
@@ -258,7 +324,7 @@ components:
           description: URL of the file (for downloading)
       required:
         - fileName
-        - uploadTimestamp
+        - uploadedTimestamp
         - uploadedBy
         - url
 
@@ -295,6 +361,39 @@ components:
         - mo
         - a
 
+    UpsertQuestionnaireRequestBody:
+      type: object
+      properties:
+        configuration:
+          $ref: "#/components/schemas/QuestionnaireConfiguration"
+        file:
+          type: string
+          format: binary
+      required:
+        - configuration
+        - file
+
+    UpsertQuestionnaireResponseBody:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/Questionnaire"
+      required:
+        - data
+
+    FetchQuestionnairesResponseBody:
+      allOf:
+        - type: object
+          properties:
+            paging:
+              $ref: "#/components/schemas/Paging"
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: "#/components/schemas/Questionnaire"
+
     Error:
       type: object
       properties:
@@ -313,7 +412,6 @@ components:
           description: String representation of HTTP status
         timestamp:
           type: string
-          format: date-time
         status:
           type: integer
           description: HTTP status
@@ -350,8 +448,8 @@ components:
             period: 1
             periodUnit: mo
 
-    CreateQuestionnaireResponse:
-      summary: Example response when creating a questionnaire
+    UpsertQuestionnaireResponse:
+      summary: Successful Create/Update
       value:
         data:
           id: d78f8706-6e68-49b0-a57c-4a0f3aedb128
@@ -375,12 +473,12 @@ components:
                 periodUnit: mo
           file:
             fileName: psj-breast-cancer-symptoms-questionnaire.json
-            uploadTimestamp: "2023-11-13T08:23:43.02Z"
+            uploadedTimestamp: "2023-11-13T08:23:43.43Z"
             uploadedBy: Lynda Johnson
             url: "https://ico.ronin.io/questionnaires/psj-breast-cancer-symptoms-questionnaire.json"
 
     FetchQuestionnairesResponse:
-      summary: Example response when fetching questionnaires
+      summary: Successful Fetch
       value:
         paging:
           page: 0
@@ -407,7 +505,7 @@ components:
                   periodUnit: mo
             file:
               fileName: psj-breast-cancer-symptoms-questionnaire.json
-              uploadTimestamp: "2023-11-13T08:23:43.02Z"
+              uploadedTimestamp: "2023-11-13T08:23:43.02Z"
               uploadedBy: Lynda Johnson
               url: "https://ico.ronin.io/questionnaires/psj-breast-cancer-symptoms-questionnaire.json"
           - id: c45751b4-7b20-4e67-b607-0e1d5661301b
@@ -427,9 +525,38 @@ components:
                   periodUnit: mo
             file:
               fileName: psj-lung-cancer-symptoms-questionnaire.json
-              uploadTimestamp: "2023-19-25T06:53:17.05Z"
+              uploadedTimestamp: "2023-19-25T06:53:17.02Z"
               uploadedBy: Lynda Johnson
               url: "https://ico.ronin.io/questionnaires/psj-lung-cancer-symptoms-questionnaire.json"
+
+    NotFoundException:
+      summary: Resource Not Found
+      value:
+        errors:
+          - id: 85467c94-4cae-4b66-ad50-67e10a4ddd49
+            source: questionnaire-service
+            httpStatus: NOT_FOUND
+            timestamp: "2023-19-25T06:53:17.45Z"
+            status: 404
+            error: Resource not found
+            exception: "com.projectronin.product.common.exception.NotFoundException"
+            message: Questionnaire with ID 0217a62f-f72b-4e42-889a-085a85cca3b7 not found
+            detail: No questionnaire in the DB found with the ID 0217a62f-f72b-4e42-889a-085a85cca3b7
+
+    BadRequestException:
+      summary: Bad Request
+      value:
+        errors:
+          - id: 8b03fbee-7e96-4491-9621-73ca0213c27d
+            source: questionnaire-service
+            httpStatus: BAD_REQUEST
+            timestamp: "2023-19-25T06:53:17.62Z"
+            status: 400
+            error: Bad request
+            exception: "com.projectronin.product.common.exception.BadRequestException"
+            message: Could not parse request body
+            detail: 'Must include the "type" property'
+
 
 
   securitySchemes:
